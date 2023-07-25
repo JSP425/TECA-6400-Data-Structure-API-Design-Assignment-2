@@ -3,8 +3,6 @@ import json
 import shutil
 from typing import Any
 
-
-"will need to load a target directory vs the highlest when creating data manager class as associations DB will all have same name within each show"
 class DataManager:
     def __init__(self, filePath: str, name="default name", creator="default creator name") -> None: 
         self.name = name
