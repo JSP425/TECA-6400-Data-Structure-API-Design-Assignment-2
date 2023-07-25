@@ -3,13 +3,21 @@ import json
 import shutil
 from typing import Any
 
+
+"will need to load a target directory vs the highlest when creating data manager class as associations DB will all have same name within each show"
 class DataManager:
-    def __init__(self, filePath: str, name="default name", creator="default creator name", databasename="default database") -> None: 
+    def __init__(self, filePath: str, name="default name", creator="default creator name") -> None: 
         self.name = name
         self.creator = creator
         self.filePath = filePath
-        self.databasename = databasename
+        #self.databasename = "default database"
         self.databasePath = None 
+
+        self.shotAssociationsDB = "Shot Associations Database"
+        self.assetAssociationsDB = "Asset Associations Database"
+        self.categoryAssociationsDB = "Assets by Categories Database"
+
+
         
         path=os.path.join(self.filePath) # if only 1 argument, useful for turning \ into /
 
@@ -20,8 +28,8 @@ class DataManager:
             print(f"Added directory: {path}")
             os.makedirs(path)
 
-            self.createDatabase(databasename)
-            self.writeDatabase(self.databasename)
+            self.createDatabase()
+            self.writeDatabase(self.name + " Database")
 
     def makePath(self,*pathargs: str) -> str:
        # if pathargs contains self.filePath in it, it will still work. seems like os.path.join will be smart and not duplicate a part of the path
@@ -29,11 +37,10 @@ class DataManager:
        print(f"makepath: {path}")
        return path
 
-    def createDatabase(self, databasename: str) -> None:
-        self.database=databasename
-        print(f"============================== Database Created For {self.name}: {self.databasename} ==============================")
+    def createDatabase(self) -> None:
+        #self.database=databasename
+        print(f"============================== Database Created For {self.name} ==============================")
         self.database = {
-            "database name" : self.databasename,
             "name" : self.name ,
             "creator" : self.creator,
             "filePath" : self.filePath,
@@ -124,14 +131,13 @@ class DataManager:
         print(f"removed a directory and its contents at {newpath}")
 
 class DirectoryOfShows(DataManager):
-    def __init__(self, filePath: str, assigned: str, name: str, creator: str, databasename: str) -> None:
+    def __init__(self, filePath: str, assigned: str, name: str, creator: str) -> None:
         self.assigned = assigned                                                 # <-- this needs to come before super()....or else line 152 will error; if super before, 
-        super().__init__(filePath, name, creator, databasename)                     # it will run createDatabase (go to parent class, and see a more specific one in child class) 
-                                                                                    # before it gets to read self.assigned=assigned
+        super().__init__(filePath, name, creator)                                   # it will run createDatabase (go to parent class, and see a more specific one in child class) 
+                                # before it gets to read self.assigned=assigned
     
-    def createDatabase(self, databasename: str) -> None:
-        self.database = databasename
-        print(f"============================== Database Created For {self.name}: {self.databasename} ==============================")
+    def createDatabase(self) -> None:
+        print(f"============================== Database Created For {self.name} ==============================")
         self.database = {
             "name" : self.name ,
             "creator" : self.creator,
@@ -141,22 +147,24 @@ class DirectoryOfShows(DataManager):
 
 
 class Show(DataManager):
-    def __init__(self, filePath: str, producer: str, director: str, name: str, creator: str, databasename: str) -> None:
+    def __init__(self, filePath: str, producer: str, director: str, name: str, creator: str) -> None:
         self.producer = producer
         self.director = director
-        super().__init__(filePath, name, creator, databasename)
+        super().__init__(filePath, name, creator)
+
 
 
         print(f"============================== Added Show: {self.name} ============================== ")
 
         self.createAssociationsDatabase()
-        self.writeDatabase("Asset and Shot Associations")
+        self.writeDatabase(self.shotAssociationsDB)
+        self.writeDatabase(self.assetAssociationsDB)
+        self.writeDatabase(self.categoryAssociationsDB)
 
-    def createDatabase(self, databasename: str) -> None:
-        self.database=databasename
-        print(f"============================== Database Created For {self.name}: {self.databasename} ==============================")
+
+    def createDatabase(self) -> None:
+        print(f"============================== Database Created For {self.name} ==============================")
         self.database = {
-            "database name" : self.databasename,
             "name" : self.name ,
             "creator" : self.creator,
             "filePath" : self.filePath,    
@@ -165,23 +173,22 @@ class Show(DataManager):
         }
     
     def createAssociationsDatabase(self) -> None:
-        self.database = {
-            "database name" : self.databasename + " - Associations Database"
-        }
+        self.database = {}
 
 class Shot(DataManager): 
-    def __init__(self, filePath: str, shotNumber: int, FPS: float, lowerFrameRange: int, upperFrameRange: int, name: str, creator: str, databasename: str) -> None:
+    def __init__(self, filePath: str, shotNumber: int, FPS: float, lowerFrameRange: int, upperFrameRange: int, name: str, creator: str) -> None:
         self.shotNumber = shotNumber
         self.FPS = FPS
         self.lowerFrameRange = lowerFrameRange
         self.upperFrameRange = upperFrameRange
-        super().__init__(filePath, name, creator, databasename)
+        super().__init__(filePath, name, creator)
+
 
         print(f"============================== Added Show: {self.shotNumber} ============================== ")
     
 
 
-        self.updateDatabase("Asset and Shot Associations", f"shot number {self.shotNumber}", [])
+        self.updateDatabase(self.shotAssociationsDB, f"shot number {self.shotNumber}", [])
 
 
     def updateDatabase(self, targetDB: str, key: str, value: Any) -> None:
@@ -204,11 +211,9 @@ class Shot(DataManager):
             json.dump(tempDatabase, file, indent=4)
 
 
-    def createDatabase(self, databasename: str) -> None:
-        self.database=databasename
-        print(f"============================== Database Created For {self.name}: {self.databasename} ==============================")
+    def createDatabase(self) -> None:
+        print(f"============================== Database Created For {self.name} ==============================")
         self.database = {
-            "database name" : self.databasename,
             "name" : self.name ,
             "creator" : self.creator,
             "filePath" : self.filePath,
@@ -221,13 +226,35 @@ class Shot(DataManager):
 
         } 
 
+class Asset(DataManager):
+    def __init__(self, filePath: str, assetName: str, category: str, shotAssociation: int, name: str, creator: str) -> None:
+        
+        self.assetName= assetName
+        self.category = category
+        self.shotAssociation = shotAssociation
+        super().__init__(filePath, name, creator)
+
+
+        
+    
+    def createDatabase(self) -> None:
+        self.database = {
+            "asset stuff" : "test"
+
+
+        }
+        
+
+
 
 targetDirectory="C:/Users/jpark/Desktop/TestDirectory"
 targetShow="C:/Users/jpark/Desktop/TestDirectory/Show1"
 targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001"
 targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
+targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
 
 
-tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Directory1", "Creator1000", "Directory1 DB")
-tempShow=Show(targetShow, "Producer99", "Director99", "Show1", "Creator99", "Show1 DB")
-tempShot=Shot(targetShot, 1, 23.97, 1, 40, "testshot", "ArtistName", "Shot1 DB") 
+tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Directory1", "Creator1000")
+tempShow=Show(targetShow, "Producer99", "Director99", "Show1", "Creator99")
+tempShot=Shot(targetShot, 1, 23.97, 1, 40, "testshot", "ArtistName") 
+tempAsset=Asset(targetAsset, "ma,e", "character", 1, "a name", "me")
