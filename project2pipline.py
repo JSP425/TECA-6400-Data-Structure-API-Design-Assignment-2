@@ -13,9 +13,13 @@ class DataManager:
         #self.databasename = "default database"
         self.databasePath = None 
 
-        self.shotAssociationsDB = "Shot Associations Database"
-        self.assetAssociationsDB = "Asset Associations Database"
+        self.shotAssociationsDB = "Shot-Asset Associations Database"
+        self.assetAssociationsDB = "Asset-Shot Associations Database"
         self.categoryAssociationsDB = "Assets by Categories Database"
+
+        self.categoryCharacterKey = "character"
+        self.categoryPropKey = "prop"
+        self.categoryEnvironmentKey = "environment"
 
 
         
@@ -66,10 +70,24 @@ class DataManager:
                 print("File found at:", file_path)
                 return file_path
 
-            # File not found
-            else:
-                print("File not found.")
-                return None
+        # File not found
+        else:
+            print("File not found.")
+            return None
+        
+    def getDirectoryPath(self, directory_name: str, directory_path: str) -> str:
+        # this function is for conveniently getting the file path for a database json file
+        # this will allow the user to just type in the database name in the methods below to see/manage its content
+        for root, dirs, files in os.walk(directory_path):
+            if directory_name in dirs:
+                target_path = os.path.join(root, directory_name)
+                print("File found at:", target_path)
+                return target_path
+
+        # File not found
+        else:
+            print("Directory not found.")
+            return None
     
     def showDatabase(self, targetDB: str) -> None:   
 
@@ -88,6 +106,56 @@ class DataManager:
 
         with open(self.getFilePath(targetDB, self.filePath),'w') as file:
             json.dump(tempDatabase, file, indent=4)
+
+    def updateAssociationsDatabase(self, targetDB: str, key: str, value: Any) -> None:
+        # this method is modified from the parent class to specifically suit the creation of the Asset and Shot Associations json file
+        # this is different as it needs to access the json file in its parent directory; if not for this modification, the method in the
+        # parent class would look for the json file in the Shot directory and not the Show directory, returning a type error of None
+
+
+        parent_directory = os.path.dirname(self.filePath)
+
+        associationsDB = self.getFilePath(targetDB, parent_directory)
+
+        with open(associationsDB, "r") as file:
+            tempDatabase = json.load(file)
+
+        tempDatabase[key]=value
+
+        print(f"**** Updated Database: {key} : {value} ****")
+
+        with open(associationsDB,'w') as file:
+            json.dump(tempDatabase, file, indent=4)
+     
+
+    def addInDatabase(self, targetDB: str, key: str, value: Any) -> None:
+
+        parent_directory = os.path.dirname(self.filePath)
+
+        associationsDB = self.getFilePath(targetDB, parent_directory)
+
+        with open(associationsDB, "r") as file:
+            tempDatabase = json.load(file)
+        
+        tempDatabase[key].append(value)
+
+        print(f"**** Updated Database: {key} : {value} ****")
+
+        with open(associationsDB,'w') as file:
+            json.dump(tempDatabase, file, indent=4)
+    
+    def checkExist(self, shotPath: str) -> None:
+        parent_directory = os.path.dirname(self.filePath)
+        print(f"********parent_directory**********{parent_directory}")
+        print(f"******shotpath******{shotPath}")
+        targetExistDB = self.getDirectoryPath(shotPath, parent_directory)
+        print(f"********targetexistdb**********{targetExistDB}")
+
+        if targetExistDB == None:
+            return False
+        else:
+            result=os.path.exists(targetExistDB)
+            return result
 
     def addContent(self, *args: str) -> None:
         print(f"============================== Added: {self.name} ============================== ")
@@ -134,7 +202,7 @@ class DirectoryOfShows(DataManager):
     def __init__(self, filePath: str, assigned: str, name: str, creator: str) -> None:
         self.assigned = assigned                                                 # <-- this needs to come before super()....or else line 152 will error; if super before, 
         super().__init__(filePath, name, creator)                                   # it will run createDatabase (go to parent class, and see a more specific one in child class) 
-                                # before it gets to read self.assigned=assigned
+                                                                                    # before it gets to read self.assigned=assigned
     
     def createDatabase(self) -> None:
         print(f"============================== Database Created For {self.name} ==============================")
@@ -160,6 +228,11 @@ class Show(DataManager):
         self.writeDatabase(self.shotAssociationsDB)
         self.writeDatabase(self.assetAssociationsDB)
         self.writeDatabase(self.categoryAssociationsDB)
+
+        # self.updateDatabase(self.categoryAssociationsDB, "character", [])
+        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryCharacterKey, [])
+        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryPropKey, [])
+        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryEnvironmentKey, [])
 
 
     def createDatabase(self) -> None:
@@ -187,28 +260,8 @@ class Shot(DataManager):
         print(f"============================== Added Show: {self.shotNumber} ============================== ")
     
 
+        self.updateAssociationsDatabase(self.shotAssociationsDB, f"shot {self.shotNumber}", [])
 
-        self.updateDatabase(self.shotAssociationsDB, f"shot number {self.shotNumber}", [])
-
-
-    def updateDatabase(self, targetDB: str, key: str, value: Any) -> None:
-        # this method is modified from the parent class to specifically suit the creation of the Asset and Shot Associations json file
-        # this is different as it needs to access the json file in its parent directory; if not for this modification, the method in the
-        # parent class would look for the json file in the Shot directory and not the Show directory
-
-
-        parent_directory = os.path.dirname(self.filePath)
-        associationsDB = parent_directory + "/" + targetDB
-
-        with open(associationsDB, "r") as file:
-            tempDatabase = json.load(file)
-
-        tempDatabase[key]=value
-
-        print(f"**** Updated Database: {key} : {value} ****")
-
-        with open(associationsDB,'w') as file:
-            json.dump(tempDatabase, file, indent=4)
 
 
     def createDatabase(self) -> None:
@@ -227,19 +280,37 @@ class Shot(DataManager):
         } 
 
 class Asset(DataManager):
-    def __init__(self, filePath: str, assetName: str, category: str, shotAssociation: int, name: str, creator: str) -> None:
+    def __init__(self, filePath: str, category: str, shotAssociation: list, name: str, creator: str) -> None:
         
-        self.assetName= assetName
         self.category = category
         self.shotAssociation = shotAssociation
         super().__init__(filePath, name, creator)
 
+        # add asset name to list of assets associated with shots
+        self.updateAssociationsDatabase(self.assetAssociationsDB, self.name, [])
 
-        
-    
+
+        for shotNumber in shotAssociation:
+            if self.checkExist(f"Shot{shotNumber}") == True:
+                self.addInDatabase(self.assetAssociationsDB, self.name, shotNumber)
+            elif self.checkExist(f"Shot{shotNumber}") == False:
+                print(f"Shot{shotNumber} does not exist yet and will not be added to the Asset Associations Database")
+
+        # add asset name into shots containing this asset
+        for shotNumber in shotAssociation:
+            try:
+                self.addInDatabase(self.shotAssociationsDB, f"shot {shotNumber}", self.name)
+            except KeyError:
+                print(f"Key Error: shot {shotNumber} does not exist")
+
+        # add asset to category DB
+        self.addInDatabase(self.categoryAssociationsDB, category, self.name)
+
     def createDatabase(self) -> None:
         self.database = {
-            "asset stuff" : "test"
+            "asset name" : self.name,
+            "category" : self.category,
+            "shot association" : self.shotAssociation
 
 
         }
@@ -249,12 +320,14 @@ class Asset(DataManager):
 
 targetDirectory="C:/Users/jpark/Desktop/TestDirectory"
 targetShow="C:/Users/jpark/Desktop/TestDirectory/Show1"
-targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001"
+targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot1"
 targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
 targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
 
 
 tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Directory1", "Creator1000")
 tempShow=Show(targetShow, "Producer99", "Director99", "Show1", "Creator99")
-tempShot=Shot(targetShot, 1, 23.97, 1, 40, "testshot", "ArtistName") 
-tempAsset=Asset(targetAsset, "ma,e", "character", 1, "a name", "me")
+tempShot=Shot(targetShot, 1, 23.97, 1, 40, "testshot", "ArtistName")
+tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "testshot", "ArtistName")
+tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
+tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
