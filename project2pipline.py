@@ -6,8 +6,8 @@ from typing import Any
 
 "will need to load a target directory vs the highlest when creating data manager class as associations DB will all have same name within each show"
 class DataManager:
-    def __init__(self, filePath: str, name="default name", creator="default creator name") -> None: 
-        self.name = name
+    def __init__(self, filePath: str, creator="default creator name") -> None: 
+        self.name = self.getLastPathItem(filePath)
         self.creator = creator
         self.filePath = filePath
         #self.databasename = "default database"
@@ -74,6 +74,10 @@ class DataManager:
         else:
             print("File not found.")
             return None
+    
+    def getLastPathItem(self, targetPath: str) -> None:
+        result = os.path.basename(targetPath)
+        return result
         
     def getDirectoryPath(self, directory_name: str, directory_path: str) -> str:
         # this function is for conveniently getting the file path for a database json file
@@ -144,18 +148,38 @@ class DataManager:
         with open(associationsDB,'w') as file:
             json.dump(tempDatabase, file, indent=4)
     
-    def checkExist(self, shotPath: str) -> None:
+    def checkExist(self, targetPath: str) -> None:
         parent_directory = os.path.dirname(self.filePath)
-        print(f"********parent_directory**********{parent_directory}")
-        print(f"******shotpath******{shotPath}")
-        targetExistDB = self.getDirectoryPath(shotPath, parent_directory)
-        print(f"********targetexistdb**********{targetExistDB}")
+        # print(f"********parent_directory**********{parent_directory}")
+        # print(f"******targetPath******{targetPath}")
+        targetExistDB = self.getDirectoryPath(targetPath, parent_directory)
+        # print(f"********targetexistdb**********{targetExistDB}")
+
+        # if targetExistDB:
+        #     result=os.path.exists(targetExistDB)
+        #     return result
+        # else:
+        #     return False
 
         if targetExistDB == None:
             return False
         else:
             result=os.path.exists(targetExistDB)
             return result
+        
+    def associateAssetShot(self, assetName: str, shotNumber: int) -> None:
+        assetNamePath=self.checkExist(assetName)
+        print(f"************************asset name path {assetNamePath}")
+
+        shotNumberPath=self.checkExist(f"Shot{shotNumber}")
+        print(f"************************shotNumber {shotNumber}")
+
+        if assetNamePath and shotNumberPath:
+            self.addInDatabase(self.assetAssociationsDB, assetName, shotNumber)
+            self.addInDatabase(self.shotAssociationsDB, f"shot {shotNumber}", assetName)
+
+        else:
+            print(f"Either {assetName} or {shotNumber} does not exist. Please double check.")
 
     def addContent(self, *args: str) -> None:
         print(f"============================== Added: {self.name} ============================== ")
@@ -199,9 +223,9 @@ class DataManager:
         print(f"removed a directory and its contents at {newpath}")
 
 class DirectoryOfShows(DataManager):
-    def __init__(self, filePath: str, assigned: str, name: str, creator: str) -> None:
+    def __init__(self, filePath: str, assigned: str, creator: str) -> None:
         self.assigned = assigned                                                 # <-- this needs to come before super()....or else line 152 will error; if super before, 
-        super().__init__(filePath, name, creator)                                   # it will run createDatabase (go to parent class, and see a more specific one in child class) 
+        super().__init__(filePath, creator)                                   # it will run createDatabase (go to parent class, and see a more specific one in child class) 
                                                                                     # before it gets to read self.assigned=assigned
     
     def createDatabase(self) -> None:
@@ -215,10 +239,10 @@ class DirectoryOfShows(DataManager):
 
 
 class Show(DataManager):
-    def __init__(self, filePath: str, producer: str, director: str, name: str, creator: str) -> None:
+    def __init__(self, filePath: str, producer: str, director: str, creator: str) -> None:
         self.producer = producer
         self.director = director
-        super().__init__(filePath, name, creator)
+        super().__init__(filePath, creator)
 
 
 
@@ -249,12 +273,13 @@ class Show(DataManager):
         self.database = {}
 
 class Shot(DataManager): 
-    def __init__(self, filePath: str, shotNumber: int, FPS: float, lowerFrameRange: int, upperFrameRange: int, name: str, creator: str) -> None:
+    def __init__(self, filePath: str, shotNumber: int,FPS: float, lowerFrameRange: int, upperFrameRange: int, creator: str) -> None:
         self.shotNumber = shotNumber
+        #self.assetAssociationsDB = assetAssociation
         self.FPS = FPS
         self.lowerFrameRange = lowerFrameRange
         self.upperFrameRange = upperFrameRange
-        super().__init__(filePath, name, creator)
+        super().__init__(filePath, creator)
 
 
         print(f"============================== Added Show: {self.shotNumber} ============================== ")
@@ -280,28 +305,14 @@ class Shot(DataManager):
         } 
 
 class Asset(DataManager):
-    def __init__(self, filePath: str, category: str, shotAssociation: list, name: str, creator: str) -> None:
-        
+    def __init__(self, filePath: str, category: str) -> None:
+        self.name = self.getLastPathItem(filePath)
         self.category = category
-        self.shotAssociation = shotAssociation
-        super().__init__(filePath, name, creator)
+        #self.shotAssociation = shotAssociation
+        super().__init__(filePath)
 
         # add asset name to list of assets associated with shots
         self.updateAssociationsDatabase(self.assetAssociationsDB, self.name, [])
-
-
-        for shotNumber in shotAssociation:
-            if self.checkExist(f"Shot{shotNumber}") == True:
-                self.addInDatabase(self.assetAssociationsDB, self.name, shotNumber)
-            elif self.checkExist(f"Shot{shotNumber}") == False:
-                print(f"Shot{shotNumber} does not exist yet and will not be added to the Asset Associations Database")
-
-        # add asset name into shots containing this asset
-        for shotNumber in shotAssociation:
-            try:
-                self.addInDatabase(self.shotAssociationsDB, f"shot {shotNumber}", self.name)
-            except KeyError:
-                print(f"Key Error: shot {shotNumber} does not exist")
 
         # add asset to category DB
         self.addInDatabase(self.categoryAssociationsDB, category, self.name)
@@ -310,7 +321,7 @@ class Asset(DataManager):
         self.database = {
             "asset name" : self.name,
             "category" : self.category,
-            "shot association" : self.shotAssociation
+
 
 
         }
@@ -325,9 +336,17 @@ targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
 targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
 
 
-tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Directory1", "Creator1000")
-tempShow=Show(targetShow, "Producer99", "Director99", "Show1", "Creator99")
-tempShot=Shot(targetShot, 1, 23.97, 1, 40, "testshot", "ArtistName")
-tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "testshot", "ArtistName")
-tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
-tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
+tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+tempShow=Show(targetShow, "Producer99", "Director99", "Creator99")
+tempShot=Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "ArtistName")
+
+# tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
+# tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
+tempAsset=Asset(targetAsset, "character") 
+tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character") 
+
+tempAsset.associateAssetShot("Asset1", 1)
+tempAsset.associateAssetShot("Asset2", 2)
+tempAsset.associateAssetShot("Asset2", 1)
+tempAsset.associateAssetShot("third asset", 2) 
