@@ -92,6 +92,47 @@ def test_associate():
     assert charResult == ["Asset1"]
     assert propResult == ["Asset2"]
 
-    #temp.removeFolder(targetDirectory)
+    temp.removeFolder(targetDirectory)
 
+def test_archiveZipAsset():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    temp=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    temp.archiveZip("Asset1")
+    temp.archiveZip("Asset2")
+
+    # result=temp.showDatabaseKey("Asset1 Database", "category")
+
+    assert os.path.exists(targetAsset+".zip")
+    assert os.path.exists(targetAsset2+".zip")
     
+    assert os.path.exists(targetAsset) == False
+    assert os.path.exists(targetAsset2) == False
+
+    # assert result == "character"
+
+    temp.removeFolder(targetDirectory)
+
+def test_archiveZipShow():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    asset=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    asset.archiveZip("Asset1")
+    result = asset.showArchiveContent("Asset1.zip")
+
+    assert result == ['Asset1/', 'Asset1/Asset1 Database']
+
+    # show.archiveZip("Show1")
+
+    # categoryResult=asset.showCharacterCategory()
+
+    # assert categoryResult == ["Asset1"]
+
