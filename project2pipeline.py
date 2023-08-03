@@ -28,10 +28,12 @@ class DataManager:
         self.shotAssociationsDB = "Shot-Asset Associations Database"
         self.assetAssociationsDB = "Asset-Shot Associations Database"
         self.categoryAssociationsDB = "Assets by Categories Database"
+        self.assetList = "Asset List"
 
         self.categoryCharacterKey = "character"
         self.categoryPropKey = "prop"
         self.categoryEnvironmentKey = "environment"
+        self.assetListKey = "assets"
 
         path=os.path.join(self.filePath) # if only 1 argument, useful for turning \ into /
 
@@ -210,6 +212,28 @@ class DataManager:
         with open(self.getFilePathFromParent(targetDB, self.filePath),'w') as file:
             json.dump(tempDatabase, file, indent=4)
 
+    def updateAssociationsDatabaseInit(self, targetDB: str, key: str, value: Any) -> None:
+        """
+        Replaces the current value of a specified key for specific databases.
+        
+        This is only used for the initialization of the Show class.
+        """
+
+        # if self.getFilePathFromParent is used and there are more than 1 show directory, the initialization of the second class will
+        # have its associations database auto populations in the first show directory as it will start its search from the parent class
+        # and leave the databases in the second show directory empty. 
+        associationsDB = self.getFilePath(targetDB, self.filePath)
+
+        with open(associationsDB, "r") as file:
+            tempDatabase = json.load(file)
+
+        tempDatabase[key]=value
+
+        print(f"**** Updated Database: {key} : {value} ****")
+
+        with open(associationsDB,'w') as file:
+            json.dump(tempDatabase, file, indent=4)
+     
     def updateAssociationsDatabase(self, targetDB: str, key: str, value: Any) -> None:
         """
         Replaces the current value of a specified key for specific databases.
@@ -220,6 +244,7 @@ class DataManager:
         level and would not be accesible if searched for from a Shot or Asset instance.
         """
 
+        # associationsDB = self.getFilePathFromParent(targetDB, self.filePath)
         associationsDB = self.getFilePathFromParent(targetDB, self.filePath)
 
         with open(associationsDB, "r") as file:
@@ -263,8 +288,6 @@ class DataManager:
 
 
         """
-
-
         assetNamePath=self.checkExist(assetName)
         #print(f"************************asset name path {assetNamePath}")
 
@@ -299,6 +322,20 @@ class DataManager:
             jsonData=json.load(file)
 
             value = jsonData.get(key, "Key not found")
+            print(value)
+
+            return value
+        
+    def showAssetList(self) -> dict:
+        # self.showDatabaseKey(self.assetList, self.assetListKey)
+        """ Prints and returns a list of assets in a directory.
+         
+        This is to be used at the show directory level  
+        """
+        with open(self.getFilePath(self.assetList, self.filePath),'r') as file:
+            jsonData=json.load(file)
+
+            value = jsonData.get(self.assetListKey, "Key not found")
             print(value)
 
             return value
@@ -491,11 +528,13 @@ class Show(DataManager):
         self.writeDatabase(self.shotAssociationsDB)
         self.writeDatabase(self.assetAssociationsDB)
         self.writeDatabase(self.categoryAssociationsDB)
+        self.writeDatabase(self.assetList)
 
         # adding an empty list to each database
-        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryCharacterKey, [])
-        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryPropKey, [])
-        self.updateAssociationsDatabase(self.categoryAssociationsDB, self.categoryEnvironmentKey, [])
+        self.updateAssociationsDatabaseInit(self.categoryAssociationsDB, self.categoryCharacterKey, [])
+        self.updateAssociationsDatabaseInit(self.categoryAssociationsDB, self.categoryPropKey, [])
+        self.updateAssociationsDatabaseInit(self.categoryAssociationsDB, self.categoryEnvironmentKey, [])
+        self.updateAssociationsDatabaseInit(self.assetList, self.assetListKey, [])
 
 
     def createDatabase(self) -> None:
@@ -560,8 +599,11 @@ class Asset(DataManager):
         # this adds a particular instance of an asset as a key in the asset associations database so shots can be listed in it later
         self.updateAssociationsDatabase(self.assetAssociationsDB, self.name, [])
 
-        # add asset to the category database
+        # append asset to the category database
         self.addInDatabase(self.categoryAssociationsDB, category, self.name)
+
+        # append asset to asset list
+        self.addInDatabase(self.assetList, self.assetListKey, self.name)
 
     def createDatabase(self) -> None:
         self.database = {
@@ -576,39 +618,39 @@ class Asset(DataManager):
 
 
 
-targetDirectory="C:/Users/jpark/Desktop/TestDirectory"
-targetShow="C:/Users/jpark/Desktop/TestDirectory/Show1"
-targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot1"
-targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
-targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
+# targetDirectory="C:/Users/jpark/Desktop/TestDirectory"
+# targetShow="C:/Users/jpark/Desktop/TestDirectory/Show1"
+# targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot1"
+# targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
+# targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
 
 
-tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
-tempShow=Show(targetShow, "Producer99", "Director99", "Creator99")
-tempShot=Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
-tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "ArtistName")
+# tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+# tempShow=Show(targetShow, "Producer99", "Director99", "Creator99")
+# tempShot=Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+# tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "ArtistName")
 
-# tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
-# tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
-tempAsset=Asset(targetAsset, "character") 
-tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character") 
+# # tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
+# # tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
+# tempAsset=Asset(targetAsset, "character") 
+# tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character") 
 
-tempAsset.associateAssetShot("Asset1", 1)
-tempAsset.associateAssetShot("Asset2", 2)
-tempAsset.associateAssetShot("Asset2", 1)
-tempAsset.associateAssetShot("third asset", 2) 
+# tempAsset.associateAssetShot("Asset1", 1)
+# tempAsset.associateAssetShot("Asset2", 2)
+# tempAsset.associateAssetShot("Asset2", 1)
+# tempAsset.associateAssetShot("third asset", 2) 
 
+# # tempShow.archiveZip("Asset1")
+
+
+# # ** archive
 # tempShow.archiveZip("Asset1")
+# tempShot.archiveZip("Shot1")
+# # tempAsset.showArchiveContent("Asset1.zip")
 
-
-# ** archive
-tempShow.archiveZip("Asset1")
-tempShot.archiveZip("Shot1")
-# tempAsset.showArchiveContent("Asset1.zip")
-
-tempAsset.showArchivedDatabase("Asset1")
-tempShot.showArchivedDatabase("Shot1")
+# tempAsset.showArchivedDatabase("Asset1")
+# tempShot.showArchivedDatabase("Shot1")
 
 # tempShow.archiveZipShow("Show1")
-# ** archive
+# # ** archive
 
