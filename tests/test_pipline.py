@@ -48,7 +48,9 @@ def test_updateDatabase():
     project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
     project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
     project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
-    temp=project2pipeline.Asset(targetAsset, "character") 
+    temp2=project2pipeline.Asset(targetAsset, "character") 
+
+    temp=project2pipeline.DataManager(targetAsset)
 
     temp.updateDatabase("Shot1 Database", "assigned animators", ["Artist 1", "Artist 2", "Artist 3"])
     with open(targetDB,'r') as file:
@@ -67,8 +69,10 @@ def test_associate():
     project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
     project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
     project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
-    temp=project2pipeline.Asset(targetAsset, "character")
+    temp2=project2pipeline.Asset(targetAsset, "character")
     project2pipeline.Asset(targetAsset2, "prop")
+
+    temp=project2pipeline.DataManager(targetAsset)
 
     temp.associateAssetShot("Asset1", 1)
     temp.associateAssetShot("Asset2", 1)
@@ -99,25 +103,49 @@ def test_archiveZipAsset():
     show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
     project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
     project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
-    temp=project2pipeline.Asset(targetAsset, "character")
+    temp2=project2pipeline.Asset(targetAsset, "character")
     project2pipeline.Asset(targetAsset2, "prop")
 
+    temp=project2pipeline.DataManager(targetAsset)
+
     temp.archiveZip("Asset1")
-    temp.archiveZip("Asset2")
+    temp.archiveZip("Shot1")
 
     # result=temp.showDatabaseKey("Asset1 Database", "category")
 
     assert os.path.exists(targetAsset+".zip")
-    assert os.path.exists(targetAsset2+".zip")
+    assert os.path.exists(targetShot+".zip")
     
     assert os.path.exists(targetAsset) == False
-    assert os.path.exists(targetAsset2) == False
+    assert os.path.exists(targetShot) == False
 
     # assert result == "character"
 
     temp.removeFolder(targetDirectory)
 
 def test_archiveZipShow():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    temp=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    show.archiveZipShow("Show1")
+    
+    # result=temp.showDatabaseKey("Asset1 Database", "category")
+
+    assert os.path.exists(targetAsset+".zip")
+    assert os.path.exists(targetAsset2+".zip")
+    assert os.path.exists(targetShot+".zip")
+    assert os.path.exists(targetShot2+".zip")
+    
+    assert os.path.exists(targetAsset) == False
+    assert os.path.exists(targetAsset2) == False
+    assert os.path.exists(targetShot) == False
+    assert os.path.exists(targetShot2) == False
+
+def test_archiveZipShowContent():
     project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
     show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
     project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
@@ -130,9 +158,24 @@ def test_archiveZipShow():
 
     assert result == ['Asset1/', 'Asset1/Asset1 Database']
 
-    # show.archiveZip("Show1")
+    show.removeFolder(targetDirectory)
 
-    # categoryResult=asset.showCharacterCategory()
 
-    # assert categoryResult == ["Asset1"]
+def test_archiveZipShowDatabase():
+    pass
 
+def test_showCategories():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    asset=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    charResult=asset.showCharacterCategory()
+    propResult=asset.showPropCategory()
+
+    assert charResult == ["Asset1"]
+    assert propResult == ["Asset2"]
+
+    show.removeFolder(targetDirectory)
