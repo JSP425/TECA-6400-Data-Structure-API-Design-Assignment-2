@@ -1,10 +1,10 @@
 import project2pipeline as pipe
 
 
-# input your desired starting directory below
-targetDirectory = "C:/Users/jpark/Desktop/TestDirectory" #<--
+# input your own root directory below
+targetDirectory = "C:/Users/jpark/Desktop/TestDirectory" 
 
-
+# these do not need to be modified
 show1 = targetDirectory+"/Show1"
 show2 = targetDirectory+"/Show2"
 

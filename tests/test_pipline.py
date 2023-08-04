@@ -160,10 +160,6 @@ def test_archiveZipShowContent():
 
     show.removeFolder(targetDirectory)
 
-
-def test_archiveZipShowDatabase():
-    pass
-
 def test_showCategories():
     project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
     show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
@@ -179,3 +175,53 @@ def test_showCategories():
     assert propResult == ["Asset2"]
 
     show.removeFolder(targetDirectory)
+
+def test_directoryPath():
+    temp=project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    
+    assert os.path.exists(targetDirectory) == True
+    temp.removeFolder(targetDirectory)
+
+def test_directoryPath():
+    temp=project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    
+    assert os.path.isfile(targetDirectory+"/TestDirectory Database")
+    temp.removeFolder(targetDirectory)
+
+def test_add_content():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    shot=project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    asset=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    shot.addContent(targetShot+"/MayaFiles")
+    assert os.path.exists("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot1/MayaFiles") == True
+    shot.removeFolder(targetDirectory)
+
+def test_moveFile():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    shot=project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    asset=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    show.moveFile(targetShow+"/Show1 Database", targetDirectory)
+
+    assert os.path.exists(targetDirectory+"/Show1 Database")
+    shot.removeFolder(targetDirectory)
+
+def test_remove_file():
+    project2pipeline.DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
+    show=project2pipeline.Show(targetShow, "Producer99", "Director99", "Creator99")
+    project2pipeline.Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
+    shot=project2pipeline.Shot(targetShot2, 2, 23.97, 1, 40, "ArtistName2")
+    asset=project2pipeline.Asset(targetAsset, "character")
+    project2pipeline.Asset(targetAsset2, "prop")
+
+    tempDM=project2pipeline.DataManager(targetDirectory)
+    tempDM.removeFile(targetDirectory+"/Show1 Database")
+
+    assert os.path.exists(targetDirectory+"/Show1 Database") == False
