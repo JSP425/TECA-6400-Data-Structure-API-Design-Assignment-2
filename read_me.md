@@ -6,7 +6,7 @@ In this second iteration of the project, added functionalities include the abili
 
 ## Getting Started
 
-Refer to the `run_me.py ` to quickly generate an example hierarchy of directories.
+Refer to the `run_me.py ` to quickly generate an example with the latest module. 
 
 ### Create a Directory of Shows
 

@@ -1,7 +1,7 @@
 import project2pipeline as pipe
 
 
-# input your own root directory below
+# input your own root directory below and run
 targetDirectory = "C:/Users/jpark/Desktop/TestDirectory" 
 
 # these do not need to be modified

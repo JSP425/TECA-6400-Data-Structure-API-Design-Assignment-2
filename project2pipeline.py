@@ -5,7 +5,6 @@ import zipfile
 from typing import Any, Union
 
 
-"will need to load a target directory vs the highlest when creating data manager class as associations DB will all have same name within each show"
 class DataManager:
     """Creates a general data manager instance. 
     
@@ -615,42 +614,4 @@ class Asset(DataManager):
 
         }
         
-
-
-
-# targetDirectory="C:/Users/jpark/Desktop/TestDirectory"
-# targetShow="C:/Users/jpark/Desktop/TestDirectory/Show1"
-# targetShot="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot1"
-# targetDB="C:/Users/jpark/Desktop/TestDirectory/Show1/Shot0001/Shot1 DB"
-# targetAsset="C:/Users/jpark/Desktop/TestDirectory/Show1/Asset1"
-
-
-# tempDir=DirectoryOfShows(targetDirectory, "Assignee", "Creator1000",)
-# tempShow=Show(targetShow, "Producer99", "Director99", "Creator99")
-# tempShot=Shot(targetShot, 1, 23.97, 1, 40, "ArtistName")
-# tempShot=Shot("C:/Users/jpark/Desktop/TestDirectory/Show1/Shot2", 2, 23.97, 1, 40, "ArtistName")
-
-# # tempAsset=Asset(targetAsset, "character", [1,2], "Main Character Asset", "me") 
-# # tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character", [2], "Secondary Character Asset", "me") 
-# tempAsset=Asset(targetAsset, "character") 
-# tempAsset=Asset("C:/Users/jpark/Desktop/TestDirectory/Show1/Asset2", "character") 
-
-# tempAsset.associateAssetShot("Asset1", 1)
-# tempAsset.associateAssetShot("Asset2", 2)
-# tempAsset.associateAssetShot("Asset2", 1)
-# tempAsset.associateAssetShot("third asset", 2) 
-
-# # tempShow.archiveZip("Asset1")
-
-
-# # ** archive
-# tempShow.archiveZip("Asset1")
-# tempShot.archiveZip("Shot1")
-# # tempAsset.showArchiveContent("Asset1.zip")
-
-# tempAsset.showArchivedDatabase("Asset1")
-# tempShot.showArchivedDatabase("Shot1")
-
-# tempShow.archiveZipShow("Show1")
-# # ** archive
 
